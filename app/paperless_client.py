@@ -51,7 +51,12 @@ def get_tag_id(tag_name: str, create_if_missing=True):
 def get_documents_needing_processing():
     """Documents having ALL of TRIGGER_TAGS, and none of PROCESSED_TAG/ERROR_TAG yet."""
     trigger_ids = [get_tag_id(name, create_if_missing=False) for name in TRIGGER_TAGS]
-    if any(tid is None for tid in trigger_ids):
+    missing = [name for name, tid in zip(TRIGGER_TAGS, trigger_ids) if tid is None]
+    if missing:
+        log.warning(
+            "RECEIPT_TRIGGER_TAGS %s don't exist in paperless-ngx yet - skipping poll cycle",
+            missing,
+        )
         return []
 
     params = {"tags__id__all": ",".join(str(i) for i in trigger_ids), "page_size": 100}

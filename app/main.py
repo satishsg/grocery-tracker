@@ -54,6 +54,8 @@ async def poll_loop():
             docs = await asyncio.to_thread(paperless_client.get_documents_needing_processing)
             if docs:
                 log.info("Found %d document(s) tagged %s", len(docs), paperless_client.TRIGGER_TAGS)
+            else:
+                log.debug("Poll cycle: no documents tagged %s awaiting processing", paperless_client.TRIGGER_TAGS)
             for doc in docs:
                 await asyncio.to_thread(process_document, doc)
         except Exception as e:
