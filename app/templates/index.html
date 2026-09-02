@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grocery Insights</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #13151a;
+    --surface: #1b1e25;
+    --surface-raised: #21252e;
+    --line: #2c313c;
+    --text: #e7e5df;
+    --muted: #8b8f9b;
+    --accent: #6f9c6a;
+    --accent-dim: #4d6d4a;
+    --warn: #c1725f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  header {
+    padding: 28px 32px 20px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    margin: 0;
+  }
+  header h1::before {
+    content: "🧾 ";
+  }
+  select {
+    background: var(--surface-raised);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 32px 80px;
+    display: grid;
+    gap: 24px;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .stat-card .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .stat-card .value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 26px;
+    font-weight: 600;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px 22px;
+  }
+  .panel h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin: 0 0 16px;
+    font-weight: 600;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 760px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+
+  /* Receipt tape styling - the signature element */
+  .receipt-tape {
+    background: linear-gradient(180deg, var(--surface) 0%, var(--surface) 100%);
+    max-height: 480px;
+    overflow-y: auto;
+  }
+  .receipt-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px dashed var(--line);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .receipt-line:last-child { border-bottom: none; }
+  .receipt-line:hover .item { color: var(--accent); }
+  .receipt-line .item {
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .receipt-line .meta {
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .receipt-line .price {
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .item-search {
+    width: 100%;
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  .item-search:focus { outline: 1px solid var(--accent); }
+
+  .item-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .item-chip {
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .item-chip:hover { border-color: var(--accent); color: var(--text); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  th {
+    color: var(--muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+  td.price { color: var(--accent); font-weight: 600; }
+  tr.cheapest td.price { color: #8fc98a; }
+  #store-comparison-table tbody tr { cursor: pointer; }
+  #store-comparison-table tbody tr:hover td { color: var(--accent); }
+  #store-comparison-table tbody tr:hover td.price { color: #8fc98a; }
+
+  .empty-state {
+    color: var(--muted);
+    font-size: 13px;
+    padding: 24px 0;
+    text-align: center;
+  }
+
+  canvas { max-height: 260px; }
+
+  .stat-card-clickable { cursor: pointer; }
+  .stat-card-clickable:hover { border-color: var(--accent); }
+  .stat-card-clickable:hover .value { color: var(--accent); }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 11, 14, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 100;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  .modal-header h2 { margin: 0; }
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-body {
+    padding: 8px 22px 18px;
+    overflow-y: auto;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Grocery Insights</h1>
+  <select id="month-select"></select>
+</header>
+
+<main>
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="label">Total spent</div>
+      <div class="value mono" id="stat-total">—</div>
+    </div>
+    <div class="stat-card stat-card-clickable" id="receipts-card">
+      <div class="label">Receipts</div>
+      <div class="value mono" id="stat-receipts">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Line items</div>
+      <div class="value mono" id="stat-items">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Top category</div>
+      <div class="value mono" id="stat-top-category">—</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="panel">
+      <h2>Spend by category</h2>
+      <canvas id="category-chart"></canvas>
+    </div>
+    <div class="panel">
+      <h2 id="receipt-tape-heading">This month's receipt tape</h2>
+      <div class="receipt-tape" id="receipt-tape"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Item price history &amp; store comparison</h2>
+    <input class="item-search" id="item-search" placeholder="Search an item, e.g. onions...">
+    <div class="item-suggestions" id="item-suggestions"></div>
+    <div class="two-col">
+      <div>
+        <canvas id="price-history-chart"></canvas>
+      </div>
+      <div>
+        <table id="store-comparison-table">
+          <thead>
+            <tr><th>Store</th><th>Unit price</th><th>Last bought</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="modal-backdrop" id="receipts-modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="receipts-modal-heading">Receipts</h2>
+      <button class="modal-close" id="receipts-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="receipt-tape" id="receipts-modal-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const monthSelect = document.getElementById('month-select');
+let categoryChart, priceHistoryChart;
+let monthItems = [];
+let activeCategory = null;
+let paperlessPublicUrl = '';
+
+async function loadConfig() {
+  const config = await fetch('/api/config').then(r => r.json());
+  paperlessPublicUrl = config.paperless_public_url;
+}
+
+const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const fmtMoney = n => `$${Number(n ?? 0).toFixed(2)}`;
+
+async function loadMonths() {
+  const months = await fetch('/api/months').then(r => r.json());
+  if (months.length === 0) {
+    monthSelect.innerHTML = '<option>No receipts yet</option>';
+    return;
+  }
+  monthSelect.innerHTML = months.map(m =>
+    `<option value="${m.year}-${m.month}">${monthNames[m.month - 1]} ${m.year}</option>`
+  ).join('');
+  monthSelect.addEventListener('change', () => loadMonth(...monthSelect.value.split('-').map(Number)));
+  loadMonth(months[0].year, months[0].month);
+}
+
+async function loadMonth(year, month) {
+  const data = await fetch(`/api/monthly?year=${year}&month=${month}`).then(r => r.json());
+  monthItems = data.items;
+  activeCategory = null;
+
+  document.getElementById('stat-total').textContent = fmtMoney(data.totals.grand_total);
+  document.getElementById('stat-receipts').textContent = data.totals.receipt_count;
+  document.getElementById('stat-items').textContent = data.items.length;
+  document.getElementById('stat-top-category').textContent =
+    data.by_category[0] ? data.by_category[0].category ?? 'other' : '—';
+
+  renderCategoryChart(data.by_category);
+  applyCategoryFilter();
+}
+
+function renderCategoryChart(byCategory) {
+  const ctx = document.getElementById('category-chart');
+  if (categoryChart) categoryChart.destroy();
+  if (byCategory.length === 0) {
+    ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+    return;
+  }
+  const labels = byCategory.map(c => c.category ?? 'other');
+  const barColor = () => labels.map(l => l === activeCategory ? '#8fc98a' : '#6f9c6a');
+  categoryChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: byCategory.map(c => c.total),
+        backgroundColor: barColor(),
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      onClick: (evt, elements) => {
+        if (!elements.length) return;
+        const clicked = labels[elements[0].index];
+        activeCategory = activeCategory === clicked ? null : clicked;
+        categoryChart.data.datasets[0].backgroundColor = barColor();
+        categoryChart.update();
+        applyCategoryFilter();
+      },
+      onHover: (evt, elements) => {
+        evt.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+      },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#8b8f9b', font: { family: 'IBM Plex Mono', size: 11 } }, grid: { display: false } },
+        y: { ticks: { color: '#8b8f9b', font: { family: 'IBM Plex Mono', size: 11 } }, grid: { color: '#2c313c' } },
+      }
+    }
+  });
+}
+
+function applyCategoryFilter() {
+  const heading = document.getElementById('receipt-tape-heading');
+  heading.textContent = activeCategory
+    ? `This month's receipt tape — ${activeCategory} (click the bar again to clear)`
+    : "This month's receipt tape";
+
+  const filtered = activeCategory
+    ? monthItems.filter(i => (i.category ?? 'other') === activeCategory)
+    : monthItems;
+  renderReceiptTape(filtered);
+}
+
+function renderReceiptTape(items) {
+  const tape = document.getElementById('receipt-tape');
+  if (items.length === 0) {
+    tape.innerHTML = activeCategory
+      ? '<div class="empty-state">No line items in this category.</div>'
+      : '<div class="empty-state">No line items yet. Tag a receipt scan with the configured trigger tags in paperless-ngx to get started.</div>';
+    return;
+  }
+  tape.innerHTML = items.map(i => `
+    <a class="receipt-line" href="${paperlessPublicUrl}/documents/${i.paperless_document_id}" target="_blank" rel="noopener">
+      <span class="item">${i.item_name}</span>
+      <span class="meta">${i.quantity ?? ''}${i.unit ?? ''} · ${i.store}</span>
+      <span class="price">${fmtMoney(i.total_price)}</span>
+    </a>
+  `).join('');
+}
+
+function groupIntoReceipts(items) {
+  const byDoc = new Map();
+  for (const i of items) {
+    const existing = byDoc.get(i.paperless_document_id);
+    if (existing) {
+      existing.total += Number(i.total_price);
+      existing.item_count += 1;
+    } else {
+      byDoc.set(i.paperless_document_id, {
+        paperless_document_id: i.paperless_document_id,
+        store: i.store,
+        purchase_date: i.purchase_date,
+        total: Number(i.total_price),
+        item_count: 1,
+      });
+    }
+  }
+  return [...byDoc.values()].sort((a, b) => b.purchase_date.localeCompare(a.purchase_date));
+}
+
+function openReceiptsModal() {
+  const receipts = groupIntoReceipts(monthItems);
+  const list = document.getElementById('receipts-modal-list');
+  list.innerHTML = receipts.length ? receipts.map(r => `
+    <a class="receipt-line" href="${paperlessPublicUrl}/documents/${r.paperless_document_id}" target="_blank" rel="noopener">
+      <span class="item">${r.store}</span>
+      <span class="meta">${r.purchase_date} · ${r.item_count} item${r.item_count === 1 ? '' : 's'}</span>
+      <span class="price">${fmtMoney(r.total)}</span>
+    </a>
+  `).join('') : '<div class="empty-state">No receipts this month.</div>';
+  document.getElementById('receipts-modal-backdrop').classList.add('open');
+}
+
+function closeReceiptsModal() {
+  document.getElementById('receipts-modal-backdrop').classList.remove('open');
+}
+
+document.getElementById('receipts-card').addEventListener('click', openReceiptsModal);
+document.getElementById('receipts-modal-close').addEventListener('click', closeReceiptsModal);
+document.getElementById('receipts-modal-backdrop').addEventListener('click', e => {
+  if (e.target.id === 'receipts-modal-backdrop') closeReceiptsModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeReceiptsModal();
+});
+
+async function loadItemSuggestions(search = '') {
+  const items = await fetch(`/api/items?search=${encodeURIComponent(search)}`).then(r => r.json());
+  const box = document.getElementById('item-suggestions');
+  box.innerHTML = items.slice(0, 12).map(name =>
+    `<span class="item-chip" data-name="${name}">${name}</span>`
+  ).join('');
+  box.querySelectorAll('.item-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.getElementById('item-search').value = chip.dataset.name;
+      loadItemDetail(chip.dataset.name);
+    });
+  });
+}
+
+async function loadItemDetail(name) {
+  const comparison = await fetch(`/api/store-comparison?name=${encodeURIComponent(name)}`).then(r => r.json());
+  // Chart is built from the same (non-wholesale) data as the table below, so the two
+  // are never inconsistent - a line with no matching comparison rows is more confusing
+  // than no line at all.
+  const chartPoints = [...comparison].sort((a, b) => a.purchase_date.localeCompare(b.purchase_date));
+
+  const ctx = document.getElementById('price-history-chart');
+  if (priceHistoryChart) priceHistoryChart.destroy();
+  priceHistoryChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: chartPoints.map(h => h.purchase_date),
+      datasets: [{
+        label: 'Unit price',
+        data: chartPoints.map(h => h.unit_price),
+        borderColor: '#6f9c6a',
+        backgroundColor: 'rgba(111,156,106,0.15)',
+        tension: 0.25,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#8b8f9b', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { display: false } },
+        y: { ticks: { color: '#8b8f9b', font: { family: 'IBM Plex Mono', size: 11 } }, grid: { color: '#2c313c' } },
+      }
+    }
+  });
+
+  const cheapestPrice = Math.min(...comparison.map(c => Number(c.unit_price)));
+  const tbody = document.querySelector('#store-comparison-table tbody');
+  tbody.innerHTML = comparison.length ? comparison.map(c => `
+    <tr class="${Number(c.unit_price) === cheapestPrice ? 'cheapest' : ''}" data-doc-id="${c.paperless_document_id}">
+      <td>${c.store}</td>
+      <td class="price">${fmtMoney(c.unit_price)}/${c.unit}</td>
+      <td>${c.purchase_date}</td>
+    </tr>
+  `).join('') : '<tr><td colspan="3" class="empty-state">No data</td></tr>';
+  tbody.querySelectorAll('tr[data-doc-id]').forEach(row => {
+    row.addEventListener('click', () => {
+      window.open(`${paperlessPublicUrl}/documents/${row.dataset.docId}`, '_blank', 'noopener');
+    });
+  });
+}
+
+document.getElementById('item-search').addEventListener('input', e => loadItemSuggestions(e.target.value));
+
+loadConfig().then(loadMonths);
+loadItemSuggestions();
+</script>
+
+</body>
+</html>

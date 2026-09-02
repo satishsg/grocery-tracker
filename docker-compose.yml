@@ -1,0 +1,40 @@
+services:
+  grocery-db:
+    image: docker.io/library/postgres:18
+    restart: unless-stopped
+    volumes:
+      - grocerydata:/var/lib/postgresql
+    environment:
+      POSTGRES_DB: grocery
+      POSTGRES_USER: grocery
+      POSTGRES_PASSWORD: ${GROCERY_DB_PASSWORD:-grocery}
+
+  grocery-tracker:
+    build: ./app
+    restart: unless-stopped
+    depends_on:
+      - grocery-db
+    ports:
+      - "8030:8080"
+    environment:
+      GROCERY_DB_HOST: grocery-db
+      GROCERY_DB_NAME: grocery
+      GROCERY_DB_USER: grocery
+      GROCERY_DB_PASSWORD: ${GROCERY_DB_PASSWORD:-grocery}
+      # LAN-reachable paperless-ngx URL (same one a browser uses) - this stack
+      # is no longer on the same docker network as paperless-ngx, so it talks
+      # to it over the network like any other API client.
+      PAPERLESS_BASE_URL: ${PAPERLESS_BASE_URL}
+      PAPERLESS_PUBLIC_URL: ${PAPERLESS_PUBLIC_URL:-${PAPERLESS_BASE_URL}}
+      PAPERLESS_API_TOKEN: ${PAPERLESS_API_TOKEN}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      RECEIPT_TRIGGER_TAGS: ${RECEIPT_TRIGGER_TAGS:-receipts,Grocery}
+      RECEIPT_PROCESSED_TAG: ${RECEIPT_PROCESSED_TAG:-receipt-processed}
+      RECEIPT_ERROR_TAG: ${RECEIPT_ERROR_TAG:-receipt-error}
+      EXTRACTION_LLM_MODEL: ${EXTRACTION_LLM_MODEL:-gpt-4o}
+      NORMALIZATION_LLM_MODEL: ${NORMALIZATION_LLM_MODEL:-gpt-4o-mini}
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-60}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+volumes:
+  grocerydata:
