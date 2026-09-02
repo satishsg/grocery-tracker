@@ -1,20 +1,20 @@
 # I taught my homelab to read grocery receipts
 
 Every grocery run leaves behind a receipt, and every receipt is secretly a
-tiny structured dataset about my life — what I buy, how much of it, and
+tiny structured dataset about my life: what I buy, how much of it, and
 whether onions have gotten stupidly expensive again. The only thing standing
 between "crumpled paper" and "actual insight" was... doing something about
 it. So, homelab experiment time.
 
 I already run [paperless-ngx](https://docs.paperless-ngx.com/) for document
-management — it eats PDFs and photos, OCRs them, and files them away. It
+management. It eats PDFs and photos, OCRs them, and files them away. It
 turns out that's about 80% of a receipt pipeline already built and running.
 So instead of standing up a whole new ingestion system, I bolted a small
 side-service onto the one I already had, and let it do the one thing that's
 actually specific to groceries: turning receipt gibberish into a real
 database, and a dashboard I named **Grocery Insights**.
 
-This is the story of that pipeline — and yes, there are diagrams, because I
+This is the story of that pipeline, and yes, there are diagrams, because I
 will take any excuse to draw boxes and arrows.
 
 ## Step 1: let paperless-ngx do what it already does
@@ -68,13 +68,13 @@ flowchart LR
 
 Notice what's *not* in that diagram: a second OCR step. The text was already
 extracted once, upstream, for a completely different reason (searchable
-document archive). grocery-tracker just reuses it — no images ever get
+document archive). grocery-tracker just reuses it. No images ever get
 re-sent to an LLM, so every receipt costs one small text completion, not an
 expensive vision call.
 
 ## Step 2: let GPT-4o deal with the receipt-formatting chaos
 
-Every store's receipt is OCR soup in its own special way — pipe-delimited
+Every store's receipt is OCR soup in its own special way: pipe-delimited
 item tables, tax code letters hanging off the end of lines, "Regular Price"
 and "You Saved" lines that quietly apply to whatever's printed above them.
 Writing a parser for this the traditional way would mean writing (and
@@ -101,22 +101,22 @@ of fragmenting into fifty one-off buckets. Bottle deposits and bag fees get
 their own `fee` category instead of quietly inflating the price of whatever
 they're printed next to.
 
-## Step 3: the actually-hard part — making "Onion" mean "Onion"
+## Step 3: the actually hard part of making "Onion" mean "Onion"
 
 Extraction alone isn't enough, because receipts never agree on what to call
 anything. "Yellow Onions." "Onions 3lb Bag." "Red Onion." If those all land
-as separate items, price history is useless — it just looks like three
+as separate items, price history is useless. It just looks like three
 different products I bought once each, instead of one product I buy every
 week.
 
 So before anything gets saved, every newly-extracted raw name gets checked
 against the running list of canonical items and either matched to one or
-added as new — via a second, cheaper LLM call (`gpt-4o-mini`). The fun part
+added as new, via a second, cheaper LLM call (`gpt-4o-mini`). The fun part
 was tuning the prompt to be conservative in the *right* direction: merge
 cosmetic variation, but never merge genuinely different products just
 because the words rhyme. "Green Onion" (a scallion) is not "Onion." "Sweet
-Potato" is not "Potato." A raw line like "BEER CRV" is a bottle deposit —
-never, ever "Beer."
+Potato" is not "Potato." A raw line like "BEER CRV" is a bottle deposit.
+Never, ever "Beer."
 
 ```mermaid
 ---
@@ -149,13 +149,13 @@ The raw wording is still kept per line item, so the dashboard's receipt
 detail view shows exactly what the receipt actually said. But price history,
 store comparison, and search all key off the canonical name, so every
 variant quietly merges. If the LLM ever gets a merge wrong, it's a
-five-second fix directly in the `canonical_items` table — no redeploy
+five-second fix directly in the `canonical_items` table. No redeploy
 required. And if the normalization call itself fails, nothing blocks: the
 item just falls back to its raw name, title-cased, and life goes on.
 
 ## The payoff: Grocery Insights
 
-All of this — the polling, the extraction, the normalization gymnastics — is
+All of this (the polling, the extraction, the normalization gymnastics) is
 in service of three questions I actually wanted answered. Here it is in
 action, on my actual grocery data:
 
@@ -185,7 +185,7 @@ not test data:
   paperless-ngx.
 - **`requests`' default error messages lie by omission.** An OpenAI 400 on
   the normalization call logged as a useless
-  `400 Client Error: Bad Request for url: ...` — no hint of *why*. Logging
+  `400 Client Error: Bad Request for url: ...`. No hint of *why*. Logging
   the actual response body turned it into an instantly diagnosable
   `"invalid model ID"`.
 - **Naming things consistently is the hard 20%.** The normalization prompt
@@ -196,5 +196,5 @@ not test data:
   pipeline hides.
 
 Up next: turning this from "a container running on my machine" into its own
-proper Portainer stack with git-based auto-deploy — decoupled from the
+proper Portainer stack with git-based auto-deploy, decoupled from the
 paperless-ngx stack it quietly depends on.
