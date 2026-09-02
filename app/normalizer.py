@@ -90,7 +90,12 @@ def normalize_items(raw_names: list, known_canonical_names: list) -> dict:
             },
             timeout=30,
         )
-        resp.raise_for_status()
+        if not resp.ok:
+            log.error(
+                "Normalization call failed (%s), falling back to raw names title-cased: %s",
+                resp.status_code, resp.text,
+            )
+            return fallback
         raw = resp.json()["choices"][0]["message"]["content"]
         mapping = json.loads(raw)
     except Exception as e:
