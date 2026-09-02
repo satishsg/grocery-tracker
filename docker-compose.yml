@@ -8,12 +8,18 @@ services:
       POSTGRES_DB: grocery
       POSTGRES_USER: grocery
       POSTGRES_PASSWORD: ${GROCERY_DB_PASSWORD:-grocery}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grocery -d grocery"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   grocery-tracker:
     build: ./app
     restart: unless-stopped
     depends_on:
-      - grocery-db
+      grocery-db:
+        condition: service_healthy
     ports:
       - "8030:8080"
     environment:
