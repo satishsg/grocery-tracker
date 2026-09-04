@@ -1,18 +1,25 @@
 # I taught my homelab to read grocery receipts
 
-Every grocery run leaves behind a receipt, and every receipt is secretly a
-tiny structured dataset about my life: what I buy, how much of it, and
-whether onions have gotten stupidly expensive again. The only thing standing
-between "crumpled paper" and "actual insight" was... doing something about
-it. So, homelab experiment time.
+I am the type of person who does not remember what things cost at the store.
+I walk out with a full cart and, five minutes later, could not tell you if
+the eggs were $4 or $8. This is a problem, because my wife will ask "how
+much was it?" about literally anything, and "I don't know, I didn't look"
+is not an answer that improves my standing in the household.
 
-I already run [paperless-ngx](https://docs.paperless-ngx.com/) for document
-management. It eats PDFs and photos, OCRs them, and files them away. It
-turns out that's about 80% of a receipt pipeline already built and running.
-So instead of standing up a whole new ingestion system, I bolted a small
-side-service onto the one I already had, and let it do the one thing that's
-actually specific to groceries: turning receipt gibberish into a real
-database, and a dashboard I named **Grocery Insights**.
+So I set up [paperless-ngx](https://docs.paperless-ngx.com/) originally just
+to have an answer ready. It eats PDFs and photos, OCRs them, and files them
+away, so every receipt gets scanned and the number exists somewhere, even if
+I can't remember it. Every receipt filed away is secretly a tiny structured
+dataset about my life: what I buy, how much of it, and whether onions have
+gotten stupidly expensive again. The only thing standing between "crumpled
+paper filed in paperless-ngx" and "actual insight" was... doing something
+about it. So, homelab experiment time.
+
+It turns out paperless-ngx is already about 80% of a receipt pipeline, built
+and running. So instead of standing up a whole new ingestion system, I
+bolted a small side-service onto the one I already had, and let it do the
+one thing that's actually specific to groceries: turning receipt gibberish
+into a real database, and a dashboard I named **Grocery Insights**.
 
 This is the story of that pipeline, and yes, there are diagrams, because I
 will take any excuse to draw boxes and arrows.
