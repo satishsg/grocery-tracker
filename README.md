@@ -105,6 +105,33 @@ tags) instead of looping forever — check `docker compose logs grocery-tracker`
 for the reason, and look at `processing_errors` in the `grocery` database for
 the full history.
 
+## Running the tests
+
+```bash
+cd app
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements-dev.txt
+pytest
+```
+
+This runs the unit test suite (`app/tests/`) — `extractor.py` and
+`normalizer.py` with the OpenAI calls mocked via `responses`, so it's fast,
+free, and doesn't need a real `OPENAI_API_KEY`.
+
+There's a second suite, `app/tests/eval/`, that calls the real OpenAI API to
+check the normalization prompt still makes the judgement calls it's supposed
+to (e.g. "Green Onion" stays separate from "Onion", "BEER CRV" doesn't get
+categorized as "Beer"). It's excluded by default and skips itself if there's
+no real API key configured. Run it explicitly after changing either
+`SYSTEM_PROMPT` in `extractor.py`/`normalizer.py`:
+
+```bash
+OPENAI_API_KEY=sk-... pytest -m eval
+```
+
+It costs real API calls and is non-deterministic, so it's not meant to run
+on every commit — only when you've touched a prompt.
+
 ## Known limitations / good next steps
 
 - **Normalization isn't perfect.** The LLM decides merges based on judgement
