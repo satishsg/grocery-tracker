@@ -1,4 +1,4 @@
-# Grocery Tracker
+# Grocery Insights
 
 Turns grocery receipts already sitting in paperless-ngx into itemized,
 queryable insights — monthly category spend, per-item price history, and
@@ -63,24 +63,6 @@ grocery-tracker is a standalone stack (`docker-compose.yml`) — it doesn't
 need to live in the same compose file as paperless-ngx. It talks to
 paperless-ngx purely over its HTTP API (same as a browser would), so the
 two stacks don't even need to share a docker network.
-
-**Via Portainer (git-based stack, auto-deploy on push):**
-
-1. **Stacks → Add stack → Repository**
-2. Repository URL: your private GitHub repo for this project
-   (`https://github.com/<you>/grocery-tracker`), branch `main`
-3. Compose path: `docker-compose.yml`
-4. Environment variables: paste in the values from `.env.example`
-   (`GROCERY_DB_PASSWORD`, `PAPERLESS_BASE_URL`, `PAPERLESS_PUBLIC_URL`,
-   `PAPERLESS_API_TOKEN`, `OPENAI_API_KEY`, etc.) — entered here, not
-   committed to the repo
-5. **GitOps updates**: enable, with either:
-   - **Polling** (e.g. every 5 min) — Portainer checks the repo and
-     redeploys on new commits, no webhook needed, or
-   - **Webhook** — copy the webhook URL Portainer gives you into the
-     GitHub repo's **Settings → Webhooks**, so a push redeploys immediately
-
-From then on, `git push` to `main` auto-deploys.
 
 **Via plain `docker compose` instead:**
 

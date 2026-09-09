@@ -27,9 +27,7 @@ services:
       GROCERY_DB_NAME: grocery
       GROCERY_DB_USER: grocery
       GROCERY_DB_PASSWORD: ${GROCERY_DB_PASSWORD:-grocery}
-      # LAN-reachable paperless-ngx URL (same one a browser uses) - this stack
-      # is no longer on the same docker network as paperless-ngx, so it talks
-      # to it over the network like any other API client.
+      # LAN-reachable paperless-ngx URL (same one a browser uses)
       PAPERLESS_BASE_URL: ${PAPERLESS_BASE_URL}
       PAPERLESS_PUBLIC_URL: ${PAPERLESS_PUBLIC_URL:-${PAPERLESS_BASE_URL}}
       PAPERLESS_API_TOKEN: ${PAPERLESS_API_TOKEN}
