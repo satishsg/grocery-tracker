@@ -48,11 +48,11 @@ grocery-tracker polls paperless-ngx for documents that have **all** of the
 tags listed in `RECEIPT_TRIGGER_TAGS` (comma-separated):
 
 ```
-RECEIPT_TRIGGER_TAGS=receipts,Grocery
+RECEIPT_TRIGGER_TAGS=Receipt,Grocery
 ```
 
 This assumes an existing paperless-gpt (or other) workflow already tags
-documents `receipts` and classifies them into `Grocery` / `Restaurant` /
+documents `Receipt` and classifies them into `Grocery` / `Restaurant` /
 etc. grocery-tracker only picks up documents that have *both* tags, and
 leaves those tags alone (it adds `receipt-processed`/`receipt-error` on top
 rather than removing anything).
