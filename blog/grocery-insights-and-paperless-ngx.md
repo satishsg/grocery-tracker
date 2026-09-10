@@ -2,7 +2,7 @@
 
 I am the type of person who does not remember what things cost at the store.
 I walk out with a full cart and, five minutes later, could not tell you if
-the eggs were $4 or $8. This is a problem, because my wife will ask "how
+the eggs were $4 or $8. This is a problem, because someone will ask "how
 much was it?" about literally anything, and "I don't know, I didn't look"
 is not an answer that improves my standing in the household.
 
@@ -17,9 +17,11 @@ about it. So, homelab experiment time.
 
 It turns out paperless-ngx is already about 80% of a receipt pipeline, built
 and running. So instead of standing up a whole new ingestion system, I
-bolted a small side-service onto the one I already had, and let it do the
-one thing that's actually specific to groceries: turning receipt gibberish
-into a real database, and a dashboard I named **Grocery Insights**.
+bolted a small side-service onto the one I already had
+([grocery-tracker](https://github.com/satishsg/grocery-tracker)), and let it
+do the one thing that's actually specific to groceries: turning receipt
+gibberish into a real database, and a dashboard I named **Grocery
+Insights**.
 
 This is the story of that pipeline, and yes, there are diagrams, because I
 will take any excuse to draw boxes and arrows.
@@ -269,3 +271,5 @@ of the tricky examples from earlier in this post, turned into an assertion:
 
 These are slow, cost real API calls, and are non-deterministic by nature, so
 they don't run on every commit, only when I've actually touched the prompt.
+
+Full source: [github.com/satishsg/grocery-tracker](https://github.com/satishsg/grocery-tracker)
